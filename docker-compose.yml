@@ -2,19 +2,33 @@ version: "3"
 services:
   rabbitmq:
     image: rabbitmq:3
-    container_name: 'rabbitmq'
+    container_name: rabbitmq
     ports:
       - 5672:5672
       - 15672:15672
-    volumes:
-      - ./Celery/rabbitmq :/Celery/broker
+    networks:
+      - main_network
+
+  redis:
+    image: redis
+    container_name: redis
+    ports:
+      - 6379:6379
+    networks:
+      - main_network
+
+  redisinsight:
+    image: redislabs/redisinsight
+    container_name: redisinsight
+    ports:
+      - 8001:8001
     networks:
       - main_network
 
   backend:
     build: .
     image: backend
-    container_name: 'backend'
+    container_name: backend
     ports:
       - 8000:8000
     volumes:
@@ -22,6 +36,9 @@ services:
     command: bash -c "uvicorn app:app --host 0.0.0.0 --port 8000 --reload"
     networks:
       - main_network
+    depends_on:
+      - rabbitmq
+      - redis
 
   worker:
     build: .
@@ -30,12 +47,12 @@ services:
     ports:
       - 80:80
     volumes:
-      - ./Celery/worker :/Celery/worker
+      - .:/app
     command: celery -A tasks worker --loglevel=info
     networks:
       - main_network
     depends_on:
-      - rabbitmq
+      - backend
 
   flower:
     build: .
@@ -44,12 +61,12 @@ services:
     ports:
       - 5555:5555
     volumes:
-      - ./Celery/flower :/Celery/flower
+      - .:/app
     command: celery -A tasks flower --loglevel=info
     networks:
       - main_network
     depends_on:
-      - rabbitmq
+      - backend
 
 networks:
   main_network:

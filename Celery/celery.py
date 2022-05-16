@@ -1,3 +1,3 @@
 from celery import Celery
 
-app = Celery(broker="pyamqp://guest@rabbitmq//")
+app = Celery(broker='amqp://guest@rabbitmq//', backend='redis://redis')

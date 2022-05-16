@@ -6,5 +6,6 @@ app = FastAPI()
 
 @app.get("/")
 async def root():
-    hello = helo_world.delay()
+    helo_world.delay()
+    helo_world()
     return {"message":"SUCCESS"}
